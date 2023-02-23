@@ -70,6 +70,7 @@ public class MSKCredentialProvider implements AWSCredentialsProvider, AutoClosea
     private static final Logger log = LoggerFactory.getLogger(MSKCredentialProvider.class);
     private static final String AWS_PROFILE_NAME_KEY = "awsProfileName";
     private static final String AWS_ROLE_ARN_KEY = "awsRoleArn";
+    private static final String AWS_ROLE_EXTERNAL_ID = "awsRoleExternalId";
     private static final String AWS_ROLE_SESSION_KEY = "awsRoleSessionName";
     private static final String AWS_STS_REGION = "awsStsRegion";
     private static final String AWS_DEBUG_CREDS_KEY = "awsDebugCreds";
@@ -278,7 +279,11 @@ public class MSKCredentialProvider implements AWSCredentialsProvider, AutoClosea
                 }
                 String sessionName = Optional.ofNullable((String) optionsMap.get(AWS_ROLE_SESSION_KEY))
                         .orElse("aws-msk-iam-auth");
+                String externalId = (String) optionsMap.getOrDefault(AWS_ROLE_EXTERNAL_ID, null);
                 String stsRegion = getStsRegion();
+                if (externalId != null) {
+                    return createSTSRoleCredentialProvider((String) p, externalId, sessionName, stsRegion);
+                }
                 return createSTSRoleCredentialProvider((String) p, sessionName, stsRegion);
             });
         }
@@ -290,6 +295,18 @@ public class MSKCredentialProvider implements AWSCredentialsProvider, AutoClosea
                     .build();
             return new STSAssumeRoleSessionCredentialsProvider.Builder(roleArn, sessionName)
                     .withStsClient(stsClient)
+                    .build();
+        }
+
+        STSAssumeRoleSessionCredentialsProvider createSTSRoleCredentialProvider(String roleArn,
+                                                                                String externalId,
+                                                                                String sessionName, String stsRegion) {
+            AWSSecurityTokenService stsClient = AWSSecurityTokenServiceClientBuilder.standard()
+                    .withRegion(stsRegion)
+                    .build();
+            return new STSAssumeRoleSessionCredentialsProvider.Builder(roleArn, sessionName)
+                    .withStsClient(stsClient)
+                    .withExternalId(externalId)
                     .build();
         }
     }
