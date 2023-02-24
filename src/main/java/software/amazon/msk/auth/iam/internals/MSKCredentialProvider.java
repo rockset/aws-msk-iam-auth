@@ -130,7 +130,7 @@ public class MSKCredentialProvider implements AWSCredentialsProvider, AutoClosea
         return new AWSCredentialsProviderChain(new EnvironmentVariableCredentialsProvider(),
                 new SystemPropertiesCredentialsProvider(),
                 WebIdentityTokenCredentialsProvider.create(),
-                new EnhancedProfileCredentialsProvider(),
+//                new EnhancedProfileCredentialsProvider(),
                 new EC2ContainerCredentialsProviderWrapper());
     }
 
